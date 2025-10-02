@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Low Stock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/admin"><i class="fas fa-arrow-left me-2"></i>Back</a>
+        </div>
+    </nav>
+    <div class="container mt-4">
+        <h1><i class="fas fa-exclamation-triangle me-2"></i>Low Stock Products</h1>
+        <a href="/admin" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left me-2"></i>Back to Dashboard</a>
+        {% if products %}
+        <div class="table-responsive">
+            <table class="table table-danger table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Author</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>{{ product.name }}</td>
+                        <td>{{ product.author or 'N/A' }}</td>
+                        <td><span class="badge bg-info">{{ product.category.name }}</span></td>
+                        <td>{{ product.quantity }}</td>
+                        <td>{{ "%.2f"|format(product.price) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle fa-2x mb-2"></i>
+            <h4>All stocks are sufficient!</h4>
+        </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>
