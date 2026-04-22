@@ -2,6 +2,8 @@
 
 A full-featured **Point of Sale (POS) and Inventory Management System** built with Python and Flask. Designed to run as a native desktop application (no browser required) using PyWebView — perfect for small retail shops that need a fast, offline-capable POS without internet dependency.
 
+> **Author:** Muneer Iqbal &nbsp;|&nbsp; **Email:** [muneeriqbal729@gmail.com](mailto:muneeriqbal729@gmail.com)
+
 ---
 
 ## Screenshots
@@ -350,6 +352,15 @@ The `bookshop.db` file stays next to the `.exe`. If you replaced the `.exe` but 
 ## License
 
 This project was developed for **BABA BANGLES AND GENERAL STORE**, Madina Bazar Dunyapur. Free to use and modify for personal or small business purposes.
+
+---
+
+## Author
+
+| | |
+|---|---|
+| **Name** | Muneer Iqbal |
+| **Email** | [muneeriqbal729@gmail.com](mailto:muneeriqbal729@gmail.com) |
 
 ---
 
