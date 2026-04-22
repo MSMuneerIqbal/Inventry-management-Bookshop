@@ -4,6 +4,14 @@ A full-featured **Point of Sale (POS) and Inventory Management System** built wi
 
 ---
 
+## Screenshots
+
+| Point of Sale (POS) | Admin Dashboard |
+|---|---|
+| ![POS Screen](pos%20pic.png) | ![Admin Panel](admin%20picture.png) |
+
+---
+
 ## Table of Contents
 
 - [What Is This?](#what-is-this)
@@ -62,6 +70,8 @@ This system is ideal for:
 
 ### Point of Sale (POS)
 
+![POS Screen](pos%20pic.png)
+
 - **Product browsing** — grid view with category filter bar and search
 - **Smart search** — searches both product name and description
 - **Stock indicators** — green dot (in stock), yellow (low), red (out of stock)
@@ -72,6 +82,8 @@ This system is ideal for:
 - **Return processing** — return a product by name, restocks quantity, logs as return
 
 ### Admin Panel
+
+![Admin Panel](admin%20picture.png)
 
 Accessible at `/admin` with password protection. Features a persistent sidebar with collapsible section groups (Products, Categories, Reports) that auto-expand for the current page.
 
