@@ -1,0 +1,12 @@
+.venv/
+.claude/
+__pycache__/
+*.pyc
+*.pyo
+instance/
+build/
+dist/
+*.spec
+*.db
+*.db-shm
+*.db-wal

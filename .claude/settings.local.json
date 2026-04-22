@@ -6,7 +6,8 @@
       "Bash(.venv/Scripts/python.exe -c ' *)",
       "Bash(.venv/Scripts/python.exe run.py)",
       "Bash(.venv/Scripts/python.exe -c \"from exe import app; print\\('OK'\\)\")",
-      "Bash(del \"templates\\\\admin\\\\report.html\" \"templates\\\\admin\\\\sales_stock.html\" \"templates\\\\admin\\\\stock_by_category.html\")"
+      "Bash(del \"templates\\\\admin\\\\report.html\" \"templates\\\\admin\\\\sales_stock.html\" \"templates\\\\admin\\\\stock_by_category.html\")",
+      "PowerShell(Copy-Item *)"
     ]
   }
 }

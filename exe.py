@@ -31,9 +31,9 @@ else:
     app = Flask(__name__)
 
 _db_dir  = os.environ.get('BOOKSHOP_DB_DIR', '')
-_db_path = os.path.join(_db_dir, 'bookshop.db') if _db_dir else None
+_db_path = os.path.join(_db_dir, 'database.db') if _db_dir else None
 app.config['SECRET_KEY']                     = 'baba-bangles-key-2024'
-app.config['SQLALCHEMY_DATABASE_URI']        = f'sqlite:///{_db_path}' if _db_path else 'sqlite:///bookshop.db'
+app.config['SQLALCHEMY_DATABASE_URI']        = f'sqlite:///{_db_path}' if _db_path else 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS']      = {
     'pool_pre_ping': True,
@@ -975,8 +975,10 @@ if __name__ == '__main__':
     t = threading.Thread(target=_run_flask, daemon=True); t.start()
     time.sleep(1.5)
     import webview
-    s = ShopSettings.query.first()
-    webview.create_window(title=s.shop_name if s else 'POS',
+    with app.app_context():
+        s = ShopSettings.query.first()
+        title = s.shop_name if s else 'POS'
+    webview.create_window(title=title,
                           url='http://127.0.0.1:5000',
                           width=1280, height=800, resizable=True, min_size=(900, 600))
     webview.start()
