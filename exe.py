@@ -971,7 +971,7 @@ def admin_stock_by_category(): return redirect('/admin/stock_report')
 def _run_flask():
     app.run(host='127.0.0.1', port=5000, debug=False, use_reloader=False)
 
-if __name__ == '__main__':
+def _launch_app():
     t = threading.Thread(target=_run_flask, daemon=True); t.start()
     time.sleep(1.5)
     import webview
@@ -982,3 +982,52 @@ if __name__ == '__main__':
                           url='http://127.0.0.1:5000',
                           width=1280, height=800, resizable=True, min_size=(900, 600))
     webview.start()
+
+def _build_exe():
+    import subprocess, sys
+    here = os.path.dirname(os.path.abspath(__file__))
+    icon = os.path.join(here, 'bookshop.ico')
+
+    # Auto-generate icon from jpeg if .ico is missing
+    if not os.path.exists(icon):
+        print('Icon not found — generating from bab bangles.jpeg ...')
+        try:
+            from PIL import Image
+            img = Image.open(os.path.join(here, 'bab bangles.jpeg')).convert('RGBA')
+            img.save(icon, format='ICO', sizes=[(256,256),(128,128),(64,64),(32,32),(16,16)])
+            print('Icon created.')
+        except Exception as e:
+            print(f'Could not create icon: {e}. Building without icon.')
+            icon = None
+
+    cmd = [
+        sys.executable, '-m', 'PyInstaller',
+        '--noconfirm', '--onedir', '--windowed',
+        '--add-data', f'{os.path.join(here, "templates")};templates',
+        '--add-data', f'{os.path.join(here, "static")};static',
+        '--name', 'BabaBangles',
+    ]
+    if icon:
+        cmd += ['--icon', icon]
+    cmd.append(os.path.join(here, 'exe.py'))
+
+    print('\n' + '='*60)
+    print('  Building BabaBangles.exe ...')
+    print('='*60 + '\n')
+    result = subprocess.run(cmd, cwd=here)
+    if result.returncode == 0:
+        exe_path = os.path.join(here, 'dist', 'BabaBangles', 'BabaBangles.exe')
+        print('\n' + '='*60)
+        print('  BUILD SUCCESSFUL!')
+        print(f'  EXE: {exe_path}')
+        print('='*60 + '\n')
+    else:
+        print('\nBuild failed. Check the output above for errors.')
+
+if __name__ == '__main__':
+    if getattr(sys, 'frozen', False):
+        # Running as compiled EXE — launch the app
+        _launch_app()
+    else:
+        # Running as plain Python script — build the EXE
+        _build_exe()
