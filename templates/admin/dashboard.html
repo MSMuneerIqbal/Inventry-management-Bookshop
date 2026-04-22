@@ -4,13 +4,50 @@
 {% block page_title %}Dashboard{% endblock %}
 {% block head %}
 <style>
-.stat-card{background:#fff;border-radius:12px;border-left:4px solid;
-    box-shadow:0 1px 5px rgba(0,0,0,0.07);display:flex;align-items:center;
-    gap:.9rem;padding:.9rem 1.1rem;}
-.stat-icon{width:44px;height:44px;border-radius:10px;display:flex;
-    align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
-.stat-val{font-size:1.5rem;font-weight:800;color:#111827;line-height:1;}
-.stat-lbl{font-size:.72rem;color:#6B7280;margin-top:2px;font-weight:500;}
+.stat-card{
+    position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 40%,#2563eb 70%,#3b82f6 100%);
+    border-radius:16px;border:none;
+    box-shadow:0 8px 32px rgba(30,58,138,.45),0 2px 8px rgba(37,99,235,.3),inset 0 1px 0 rgba(255,255,255,.15);
+    display:flex;align-items:center;gap:.9rem;padding:1rem 1.2rem;
+    transition:transform .18s,box-shadow .18s;}
+.stat-card::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,.05) 50%,rgba(255,255,255,.0) 100%);
+    border-radius:16px;pointer-events:none;}
+.stat-card::after{
+    content:'';position:absolute;top:-40%;right:-20%;
+    width:120px;height:120px;border-radius:50%;
+    background:rgba(255,255,255,.07);pointer-events:none;}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(30,58,138,.55),0 4px 12px rgba(37,99,235,.4);}
+.stat-icon{width:46px;height:46px;border-radius:12px;display:flex;
+    align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;
+    background:rgba(255,255,255,.18);backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,.25);color:#fff;}
+.stat-val{font-size:1.45rem;font-weight:800;color:#fff;line-height:1;text-shadow:0 1px 4px rgba(0,0,0,.2);}
+.stat-lbl{font-size:.72rem;color:rgba(255,255,255,.75);margin-top:3px;font-weight:500;letter-spacing:.02em;}
+
+.overview-card{
+    position:relative;overflow:hidden;text-align:center;
+    background:linear-gradient(135deg,var(--oc1) 0%,var(--oc2) 100%);
+    border-radius:16px;border:none;padding:1.2rem .8rem 1rem;
+    box-shadow:0 8px 28px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.15);
+    transition:transform .18s,box-shadow .18s;}
+.overview-card::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.04) 60%,transparent 100%);
+    border-radius:16px;pointer-events:none;}
+.overview-card::after{
+    content:'';position:absolute;bottom:-25px;right:-25px;
+    width:90px;height:90px;border-radius:50%;
+    background:rgba(255,255,255,.07);pointer-events:none;}
+.overview-card:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(0,0,0,.38);}
+.ov-icon{width:42px;height:42px;border-radius:50%;margin:0 auto .6rem;
+    display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+    background:rgba(255,255,255,.18);backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,.28);color:#fff;}
+.ov-val{font-size:1.7rem;font-weight:800;color:#fff;line-height:1;text-shadow:0 1px 4px rgba(0,0,0,.25);}
+.ov-lbl{font-size:.72rem;color:rgba(255,255,255,.75);margin-top:4px;font-weight:500;letter-spacing:.02em;}
 
 .period-btn{border:2px solid var(--p);color:var(--p);background:#fff;
     border-radius:22px;padding:.3rem 1.1rem;font-size:.82rem;font-weight:700;
@@ -84,26 +121,26 @@
 <!-- Stat Cards -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
-        <div class="stat-card" style="border-left-color:var(--p);">
-            <div class="stat-icon" style="background:#EFF6FF;color:var(--p);"><i class="fas fa-receipt"></i></div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-receipt"></i></div>
             <div><div class="stat-val">Rs.{{ "%.0f"|format(revenue) }}</div><div class="stat-lbl">Total Sales</div></div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="stat-card" style="border-left-color:#059669;">
-            <div class="stat-icon" style="background:#ECFDF5;color:#059669;"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
             <div><div class="stat-val">Rs.{{ "%.0f"|format(profit) }}</div><div class="stat-lbl">Total Profit</div></div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="stat-card" style="border-left-color:var(--s);">
-            <div class="stat-icon" style="background:#FFF7ED;color:var(--s);"><i class="fas fa-shopping-bag"></i></div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
             <div><div class="stat-val">{{ qty_sold }}</div><div class="stat-lbl">Items Sold</div></div>
         </div>
     </div>
     <div class="col-6 col-lg-3">
-        <div class="stat-card" style="border-left-color:#DC2626;">
-            <div class="stat-icon" style="background:#FEF2F2;color:#DC2626;"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
             <div><div class="stat-val">{{ low_stock_count }}</div><div class="stat-lbl">Low Stock Items</div></div>
         </div>
     </div>
@@ -111,28 +148,32 @@
 
 <!-- Quick Overview Row -->
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="admin-card mb-0 text-center py-3">
-            <div class="stat-val" style="color:var(--p);font-size:1.8rem;">{{ total_products }}</div>
-            <div class="stat-lbl">Total Products</div>
+    <div class="col-6 col-md-3">
+        <div class="overview-card" style="--oc1:#0f4c81;--oc2:#1a73e8;">
+            <div class="ov-icon"><i class="fas fa-boxes"></i></div>
+            <div class="ov-val">{{ total_products }}</div>
+            <div class="ov-lbl">Total Products</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="admin-card mb-0 text-center py-3">
-            <div class="stat-val" style="color:var(--s);font-size:1.8rem;">{{ total_cats }}</div>
-            <div class="stat-lbl">Categories</div>
+    <div class="col-6 col-md-3">
+        <div class="overview-card" style="--oc1:#065f46;--oc2:#059669;">
+            <div class="ov-icon"><i class="fas fa-tags"></i></div>
+            <div class="ov-val">{{ total_cats }}</div>
+            <div class="ov-lbl">Categories</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="admin-card mb-0 text-center py-3">
-            <div class="stat-val" style="color:#DC2626;font-size:1.8rem;">{{ out_of_stock }}</div>
-            <div class="stat-lbl">Out of Stock</div>
+    <div class="col-6 col-md-3">
+        <div class="overview-card" style="--oc1:#7f1d1d;--oc2:#dc2626;">
+            <div class="ov-icon"><i class="fas fa-times-circle"></i></div>
+            <div class="ov-val">{{ out_of_stock }}</div>
+            <div class="ov-lbl">Out of Stock</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="admin-card mb-0 text-center py-3">
-            <div class="stat-val" style="color:#059669;font-size:1.3rem;">Rs.{{ "%.0f"|format(total_stock_val) }}</div>
-            <div class="stat-lbl">Stock Value</div>
+    <div class="col-6 col-md-3">
+        <div class="overview-card" style="--oc1:#4c1d95;--oc2:#7c3aed;">
+            <div class="ov-icon"><i class="fas fa-rupee-sign"></i></div>
+            <div class="ov-val" style="font-size:1.2rem;">Rs.{{ "%.0f"|format(total_stock_val) }}</div>
+            <div class="ov-lbl">Stock Value</div>
         </div>
     </div>
 </div>
