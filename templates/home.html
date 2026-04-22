@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ shop_settings.shop_name if shop_settings else 'POS' }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --crimson: #B91C3C;
+            --crimson-d: #8B1228;
+            --gold: #D97706;
+            --gold-l: #FCD34D;
+        }
+        * { box-sizing: border-box; }
+        body { background: #F5F5F5; margin: 0; font-family: 'Segoe UI', sans-serif; }
+
+        /* ── HEADER ── */
+        .pos-header {
+            background: var(--crimson-d);
+            padding: 0;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .header-top {
+            display: flex; align-items: center;
+            gap: 1rem; padding: 0.6rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .brand-block { display: flex; align-items: center; gap: 0.75rem; min-width: 260px; }
+        .brand-logo {
+            height: 46px; width: 46px;
+            border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--gold);
+            flex-shrink: 0;
+        }
+        .brand-text { line-height: 1.2; }
+        .brand-name { color: #fff; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.3px; }
+        .brand-sub  { color: var(--gold-l); font-size: 0.68rem; opacity: 0.9; }
+
+        .search-block { flex: 1; max-width: 480px; margin: 0 auto; }
+        .search-block .input-group { border-radius: 25px; overflow: hidden; }
+        .search-block input {
+            border: none; background: rgba(255,255,255,0.15);
+            color: #fff; font-size: 0.9rem;
+        }
+        .search-block input::placeholder { color: rgba(255,255,255,0.55); }
+        .search-block input:focus { background: rgba(255,255,255,0.25); box-shadow: none; color: #fff; }
+        .search-block .btn { background: var(--gold); border: none; color: #1E0B14; font-weight: 700; }
+        .search-block .input-group-text { background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.7); }
+
+        .nav-actions { display: flex; gap: 0.5rem; margin-left: auto; }
+        .nav-btn {
+            display: flex; flex-direction: column; align-items: center;
+            color: rgba(255,255,255,0.8); text-decoration: none;
+            font-size: 0.65rem; font-weight: 600;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px; padding: 0.35rem 0.75rem;
+            min-width: 58px; transition: all 0.2s;
+        }
+        .nav-btn i { font-size: 1.1rem; margin-bottom: 2px; }
+        .nav-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+        .nav-btn.cart-btn { background: var(--gold); color: #1E0B14; }
+        .nav-btn.cart-btn:hover { background: var(--gold-l); color: #1E0B14; }
+        .cart-badge {
+            background: var(--crimson); color: #fff;
+            border-radius: 50%; font-size: 0.6rem; font-weight: 800;
+            width: 16px; height: 16px; display: inline-flex;
+            align-items: center; justify-content: center;
+            position: relative; top: -2px; margin-left: 2px;
+        }
+
+        /* ── FILTER BAR ── */
+        .filter-bar {
+            background: rgba(0,0,0,0.25);
+            padding: 0.45rem 1.5rem;
+            display: flex; align-items: center; gap: 0.5rem; overflow-x: auto;
+        }
+        .filter-bar a {
+            color: rgba(255,255,255,0.7); text-decoration: none;
+            font-size: 0.78rem; padding: 0.25rem 0.75rem;
+            border-radius: 20px; white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.15s;
+        }
+        .filter-bar a:hover, .filter-bar a.active {
+            background: var(--gold); color: #1E0B14;
+            border-color: var(--gold); font-weight: 700;
+        }
+        .filter-label { color: rgba(255,255,255,0.5); font-size: 0.72rem; white-space: nowrap; }
+
+        /* ── FLASH ── */
+        .flash-strip {
+            background: #FFFBEB; border-left: 4px solid var(--gold);
+            color: #92400E; padding: 0.6rem 1.5rem;
+            font-size: 0.88rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        /* ── PRODUCT GRID ── */
+        .products-section { padding: 1.25rem 1.5rem; }
+        .section-meta { color: #6B7280; font-size: 0.82rem; margin-bottom: 1rem; }
+
+        .product-card {
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden; height: 100%;
+            display: flex; flex-direction: column;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .product-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.13); transform: translateY(-2px); }
+        .product-card.out-of-stock { opacity: 0.65; }
+
+        .card-color-bar { height: 4px; }
+
+        .product-card .card-body { padding: 0.9rem; flex: 1; display: flex; flex-direction: column; }
+        .product-name { font-weight: 700; font-size: 0.92rem; color: #1F2937; margin-bottom: 4px; line-height: 1.3; }
+        .product-author { font-size: 0.75rem; color: #9CA3AF; margin-bottom: 6px; }
+        .product-category {
+            display: inline-block; background: #FEF3C7; color: #92400E;
+            font-size: 0.68rem; font-weight: 700; padding: 2px 8px;
+            border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .product-price {
+            font-size: 1.3rem; font-weight: 800;
+            color: var(--crimson); margin-bottom: 4px;
+        }
+        .product-price small { font-size: 0.7rem; font-weight: 400; color: #9CA3AF; }
+        .stock-info { font-size: 0.75rem; color: #6B7280; margin-bottom: 10px; }
+        .stock-dot {
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; margin-right: 4px;
+        }
+
+        .add-form { margin-top: auto; }
+        .add-form .input-group input {
+            border-color: #E5E7EB; border-right: none;
+            font-size: 0.85rem;
+        }
+        .add-form .input-group input:focus { border-color: var(--crimson); box-shadow: none; }
+        .btn-add {
+            background: var(--crimson); border: 1px solid var(--crimson);
+            color: #fff; font-weight: 700; font-size: 0.82rem;
+            padding: 0 1rem;
+        }
+        .btn-add:hover { background: var(--crimson-d); border-color: var(--crimson-d); color: #fff; }
+        .out-badge {
+            background: #FEE2E2; color: #991B1B;
+            border-radius: 8px; padding: 0.4rem;
+            font-size: 0.78rem; font-weight: 700; text-align: center;
+        }
+
+        /* ── EMPTY ── */
+        .empty-state { text-align: center; padding: 4rem 1rem; color: #9CA3AF; }
+        .empty-state i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header class="pos-header">
+    <div class="header-top">
+        <!-- Brand -->
+        <div class="brand-block">
+            <img src="{{ url_for('static', filename='images/logo.jpeg') }}"
+                 alt="Logo" class="brand-logo">
+            <div class="brand-text">
+                <div class="brand-name">{{ shop_settings.shop_name if shop_settings else 'POS' }}</div>
+                {% if shop_settings and shop_settings.address %}
+                <div class="brand-sub">
+                    <i class="fas fa-map-marker-alt me-1"></i>{{ shop_settings.address }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-block">
+            <form method="GET" action="/search">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" name="q" placeholder="Search products..."
+                           value="{{ query }}" autocomplete="off">
+                    <button class="btn" type="submit"><i class="fas fa-search"></i></button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Nav Actions -->
+        <div class="nav-actions">
+            <a href="/cart" class="nav-btn cart-btn">
+                <i class="fas fa-shopping-cart"></i>
+                Cart
+                {% if cart_items > 0 %}
+                <span class="cart-badge">{{ cart_items }}</span>
+                {% endif %}
+            </a>
+            <a href="/return" class="nav-btn">
+                <i class="fas fa-undo"></i>
+                Return
+            </a>
+            <a href="/admin" class="nav-btn">
+                <i class="fas fa-cog"></i>
+                Admin
+            </a>
+        </div>
+    </div>
+
+    <!-- Category Filter Bar -->
+    <div class="filter-bar">
+        <span class="filter-label"><i class="fas fa-filter me-1"></i>Category:</span>
+        <a href="/?q={{ query }}" class="{{ 'active' if not selected_cat else '' }}">All</a>
+        {% for cat in categories %}
+        <a href="/?cat_id={{ cat.id }}{% if query %}&q={{ query }}{% endif %}"
+           class="{{ 'active' if cat.id|string == selected_cat|string else '' }}">
+            {{ cat.name }}
+        </a>
+        {% endfor %}
+    </div>
+</header>
+
+<!-- ══════════════ FLASH ══════════════ -->
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<div class="flash-strip">
+    <i class="fas fa-info-circle"></i> {{ messages[0] }}
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- ══════════════ PRODUCTS ══════════════ -->
+<div class="products-section">
+    {% if products %}
+    <div class="section-meta">
+        Showing <strong>{{ products|length }}</strong> product(s)
+        {% if selected_cat %}— filtered by category{% endif %}
+        {% if query %}— search: "{{ query }}"{% endif %}
+    </div>
+
+    {% set colors = ['#B91C3C','#D97706','#059669','#2563EB','#7C3AED','#DB2777','#0891B2','#65A30D'] %}
+    <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5 g-3">
+        {% for product in products %}
+        {% set ci = loop.index0 % 8 %}
+        <div class="col">
+            <div class="product-card {% if product.quantity == 0 %}out-of-stock{% endif %}">
+                <div class="card-color-bar"
+                     style="background:{{ colors[ci] }}"></div>
+                <div class="card-body">
+                    <div class="product-name">{{ product.name }}</div>
+                    {% if product.description %}
+                    <div class="product-author"><i class="fas fa-info-circle me-1"></i>{{ product.description }}</div>
+                    {% endif %}
+                    <span class="product-category">{{ product.category.name }}</span>
+
+                    <div class="product-price">
+                        Rs. {{ "%.0f"|format(product.price) }}
+                        <small>/ unit</small>
+                    </div>
+
+                    <div class="stock-info">
+                        {% if product.quantity == 0 %}
+                        <span class="stock-dot" style="background:#DC2626"></span>Out of stock
+                        {% elif product.quantity < (product.low_stock_limit or 5) %}
+                        <span class="stock-dot" style="background:#F59E0B"></span>{{ product.quantity }} left (low)
+                        {% else %}
+                        <span class="stock-dot" style="background:#10B981"></span>{{ product.quantity }} in stock
+                        {% endif %}
+                    </div>
+
+                    <div class="add-form">
+                        {% if product.quantity > 0 %}
+                        <form method="POST" action="/add_to_cart/{{ product.id }}">
+                            <div class="input-group input-group-sm">
+                                <input type="number" name="qty" min="1"
+                                       max="{{ product.quantity }}" value="1"
+                                       class="form-control text-center">
+                                <button type="submit" class="btn-add btn">
+                                    <i class="fas fa-cart-plus me-1"></i>Add
+                                </button>
+                            </div>
+                        </form>
+                        {% else %}
+                        <div class="out-badge">
+                            <i class="fas fa-times-circle me-1"></i>Out of Stock
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-search"></i>
+        <h4>No products found</h4>
+        <p>Try a different search term or category.</p>
+        <a href="/" class="btn btn-outline-secondary btn-sm mt-2">Clear Filters</a>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

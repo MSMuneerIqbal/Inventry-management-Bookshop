@@ -1,0 +1,90 @@
+{% extends "admin/base.html" %}
+{% block title %}Products{% endblock %}
+{% block page_icon %}fas fa-boxes{% endblock %}
+{% block page_title %}All Products{% endblock %}
+{% block content %}
+<div class="admin-card">
+    <div class="card-head d-flex align-items-center">
+        <i class="fas fa-boxes me-2"></i>Products
+        <span class="ms-2 badge" style="background:rgba(255,255,255,.2);">{{ total_count }}</span>
+        <a href="/admin/add" class="ms-auto btn btn-sm"
+           style="background:var(--s);color:#fff;font-weight:700;border-radius:20px;padding:.3rem 1rem;">
+            <i class="fas fa-plus me-1"></i>Add Product
+        </a>
+    </div>
+
+    <!-- Search bar -->
+    <div class="card-body pb-2 border-bottom">
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="q" class="form-control form-control-sm"
+                   placeholder="Search by name or description…" value="{{ q }}" style="max-width:340px;">
+            <button class="btn btn-sm btn-primary px-3"><i class="fas fa-search"></i></button>
+            {% if q %}
+            <a href="/admin/products" class="btn btn-sm btn-outline-secondary">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.84rem;">
+                <thead>
+                    <tr><th>#</th><th>Name</th><th>Description</th><th>Category</th>
+                        <th>Stock</th><th>Limit</th><th>Price</th><th>Purchase</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                {% for p in products %}
+                <tr {% if p.quantity == 0 %}style="opacity:.55;"
+                    {% elif p.quantity < (p.low_stock_limit or 5) %}class="table-warning"{% endif %}>
+                    <td class="text-muted small">{{ (page-1)*50 + loop.index }}</td>
+                    <td class="fw-semibold">{{ p.name }}</td>
+                    <td class="text-muted small" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        {{ p.description or '—' }}</td>
+                    <td><span class="badge badge-cat">{{ p.category.name }}</span></td>
+                    <td>
+                        {% if p.quantity == 0 %}<span class="badge bg-danger">Out</span>
+                        {% elif p.quantity < (p.low_stock_limit or 5) %}
+                        <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i>{{ p.quantity }}</span>
+                        {% else %}<span class="badge bg-success">{{ p.quantity }}</span>{% endif %}
+                    </td>
+                    <td class="text-muted small">{{ p.low_stock_limit or 5 }}</td>
+                    <td style="color:var(--p);font-weight:700;">Rs.{{ "%.2f"|format(p.price) }}</td>
+                    <td class="text-muted">{% if p.purchase_price %}Rs.{{ "%.2f"|format(p.purchase_price) }}{% else %}—{% endif %}</td>
+                    <td>
+                        <a href="/admin/update/{{ p.id }}" class="btn btn-sm btn-outline-warning me-1"><i class="fas fa-edit"></i></a>
+                        <form method="POST" action="/admin/delete/{{ p.id }}" class="d-inline"
+                              onsubmit="return confirm('Delete {{ p.name }}?')">
+                            <button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted py-5">
+                    No products{% if q %} matching "{{ q }}"{% endif %}.
+                    <a href="/admin/add">Add one →</a></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav class="d-flex justify-content-center mt-1 mb-3">
+    <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if page == 1 else '' }}">
+            <a class="page-link" href="?q={{ q }}&page={{ page-1 }}">‹ Prev</a>
+        </li>
+        {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+        <li class="page-item {{ 'active' if p == page else '' }}">
+            <a class="page-link" href="?q={{ q }}&page={{ p }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if page == total_pages else '' }}">
+            <a class="page-link" href="?q={{ q }}&page={{ page+1 }}">Next ›</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

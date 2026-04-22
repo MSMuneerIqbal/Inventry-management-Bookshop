@@ -1,0 +1,171 @@
+{% extends "admin/base.html" %}
+{% block title %}Sales Report{% endblock %}
+{% block page_icon %}fas fa-chart-bar{% endblock %}
+{% block page_title %}Sales Report{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Filter + Export -->
+<div class="admin-card">
+    <div class="card-head d-flex align-items-center">
+        <i class="fas fa-calendar-alt me-2"></i>Select Date Range
+        {% if sales or (revenue > 0) %}
+        <a href="/admin/sales/export?start_date={{ start_str }}&end_date={{ end_str }}"
+           class="btn btn-export ms-auto">
+            <i class="fas fa-file-excel me-1"></i>Export Excel
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <form method="GET">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Start Date</label>
+                    <input type="date" name="start_date" class="form-control"
+                           value="{{ start_str }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">End Date</label>
+                    <input type="date" name="end_date" class="form-control"
+                           value="{{ end_str }}" required>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>View Sales
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if revenue > 0 or sales %}
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="admin-card mb-0 text-center py-3">
+            <div style="font-size:1.8rem;font-weight:800;color:var(--p);">Rs.{{ "%.0f"|format(revenue) }}</div>
+            <div class="text-muted small">Total Revenue</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="admin-card mb-0 text-center py-3">
+            <div style="font-size:1.8rem;font-weight:800;color:#059669;">Rs.{{ "%.0f"|format(profit) }}</div>
+            <div class="text-muted small">Total Profit</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="admin-card mb-0 text-center py-3">
+            <div style="font-size:1.8rem;font-weight:800;color:var(--s);">{{ qty_sold }}</div>
+            <div class="text-muted small">Items Sold</div>
+        </div>
+    </div>
+</div>
+
+{% if daily_labels != '[]' %}
+<div class="admin-card">
+    <div class="card-head"><i class="fas fa-chart-line"></i> Daily Sales Chart</div>
+    <div class="card-body"><canvas id="salesChart" height="80"></canvas></div>
+</div>
+{% endif %}
+
+<!-- Table -->
+<div class="admin-card">
+    <div class="card-head d-flex align-items-center">
+        <i class="fas fa-list me-2"></i>
+        Transactions
+        <span class="ms-2 badge" style="background:rgba(255,255,255,.2);">{{ total_count }}</span>
+        {% if total_pages > 1 %}
+        <span class="ms-2 text-white-50" style="font-size:.75rem;font-weight:400;">
+            Page {{ page }} of {{ total_pages }}
+        </span>
+        {% endif %}
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.82rem;">
+                <thead>
+                    <tr><th>Date</th><th>Product</th><th>Category</th>
+                        <th>Qty</th><th>Price</th><th>Disc.</th><th>Sale Price</th>
+                        <th>Total</th><th>Profit</th><th>Type</th></tr>
+                </thead>
+                <tbody>
+                {% for s in sales %}
+                {% set disc = s.discount or 0 %}
+                {% set sp   = s.product.price - disc %}
+                {% set pp   = s.product.purchase_price or 0 %}
+                <tr>
+                    <td>{{ s.sale_date.strftime('%d-%m-%Y %H:%M') }}</td>
+                    <td class="fw-semibold">{{ s.product.name }}</td>
+                    <td><span class="badge badge-cat">{{ s.product.category.name }}</span></td>
+                    <td>{{ s.quantity_sold }}</td>
+                    <td>{{ "%.2f"|format(s.product.price) }}</td>
+                    <td>{{ "%.2f"|format(disc) }}</td>
+                    <td>{{ "%.2f"|format(sp) }}</td>
+                    <td class="fw-bold">{{ "%.2f"|format(s.quantity_sold * sp) }}</td>
+                    <td style="color:#059669;font-weight:600;">
+                        {% if not s.is_return %}{{ "%.2f"|format((sp - pp) * s.quantity_sold) }}{% else %}—{% endif %}
+                    </td>
+                    <td><span class="badge {{ 'bg-warning text-dark' if s.is_return else 'bg-success' }}">
+                        {{ 'Return' if s.is_return else 'Sale' }}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav class="d-flex justify-content-center mt-2">
+    <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if page == 1 else '' }}">
+            <a class="page-link" href="?start_date={{ start_str }}&end_date={{ end_str }}&page={{ page - 1 }}">‹</a>
+        </li>
+        {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+        <li class="page-item {{ 'active' if p == page else '' }}">
+            <a class="page-link" href="?start_date={{ start_str }}&end_date={{ end_str }}&page={{ p }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if page == total_pages else '' }}">
+            <a class="page-link" href="?start_date={{ start_str }}&end_date={{ end_str }}&page={{ page + 1 }}">›</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="admin-card">
+    <div class="card-body text-center py-5 text-muted">
+        <i class="fas fa-chart-bar fa-3x mb-3 d-block opacity-20"></i>
+        Select a date range above to view sales.
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+{% if daily_labels != '[]' %}
+new Chart(document.getElementById('salesChart'), {
+    type: 'bar',
+    data: {
+        labels: {{ daily_labels|safe }},
+        datasets:[{
+            label:'Revenue (Rs.)',
+            data: {{ daily_values|safe }},
+            backgroundColor:'rgba(29,78,216,0.7)',
+            borderColor:'rgba(29,78,216,1)',
+            borderWidth:1, borderRadius:6,
+        }]
+    },
+    options:{responsive:true,
+        plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true,ticks:{callback:v=>'Rs.'+v}}}}
+});
+{% endif %}
+</script>
+{% endblock %}

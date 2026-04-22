@@ -1,0 +1,268 @@
+{% extends "admin/base.html" %}
+{% block title %}Shop Settings{% endblock %}
+{% block page_icon %}fas fa-store{% endblock %}
+{% block page_title %}Shop Settings{% endblock %}
+
+{% block content %}
+<form method="POST" action="/admin/settings">
+<div class="row g-4">
+
+    <!-- Left: Settings modules -->
+    <div class="col-lg-7">
+
+        <!-- Shop Identity -->
+        <div class="admin-card">
+            <div class="card-head"><i class="fas fa-store"></i> Shop Identity</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Shop Name</label>
+                    <input type="text" class="form-control" name="shop_name"
+                           value="{{ settings.shop_name }}" required
+                           placeholder="e.g. BABA BANGLES AND GENERAL STORE">
+                    <div class="form-text">Shown on POS home screen, login page and all bills.</div>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label fw-semibold">
+                        <i class="fas fa-map-marker-alt me-1" style="color:var(--s)"></i>Address
+                    </label>
+                    <input type="text" class="form-control" name="address"
+                           value="{{ settings.address }}"
+                           placeholder="e.g. Madina Bazar Dunyapur">
+                    <div class="form-text">Printed on every bill under the shop name.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="admin-card">
+            <div class="card-head"><i class="fas fa-phone-alt"></i> Contact Information</div>
+            <div class="card-body">
+                <p class="text-muted small fw-semibold text-uppercase mb-2">Contact Person 1</p>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" name="contact1_name"
+                               value="{{ settings.contact1_name }}" placeholder="Full name">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" name="contact1_phone"
+                               value="{{ settings.contact1_phone }}" placeholder="03XX-XXXXXXX">
+                    </div>
+                </div>
+                <hr>
+                <p class="text-muted small fw-semibold text-uppercase mb-2">Contact Person 2</p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" name="contact2_name"
+                               value="{{ settings.contact2_name }}" placeholder="Full name">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" name="contact2_phone"
+                               value="{{ settings.contact2_phone }}" placeholder="03XX-XXXXXXX">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bill Note -->
+        <div class="admin-card">
+            <div class="card-head"><i class="fas fa-receipt"></i> Bill Footer Note</div>
+            <div class="card-body">
+                <textarea class="form-control" name="bill_note" rows="2"
+                          placeholder="e.g. Thank you! Please visit again.">{{ settings.bill_note }}</textarea>
+                <div class="form-text">Prints at the bottom of every receipt.</div>
+            </div>
+        </div>
+
+        <!-- Color Scheme -->
+        <div class="admin-card">
+            <div class="card-head"><i class="fas fa-palette"></i> Admin Color Scheme</div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">Choose the color theme for the admin panel. Changes take effect after saving.</p>
+                <div class="row g-3">
+
+                    <!-- Blue -->
+                    <div class="col-md-4">
+                        <label class="scheme-card {% if (settings.color_scheme or 'blue') == 'blue' %}selected{% endif %}"
+                               for="scheme_blue">
+                            <input type="radio" name="color_scheme" id="scheme_blue" value="blue"
+                                   {% if (settings.color_scheme or 'blue') == 'blue' %}checked{% endif %}>
+                            <div class="scheme-preview" style="background:linear-gradient(135deg,#1D4ED8,#0F172A);">
+                                <div class="scheme-bar" style="background:#0EA5E9;"></div>
+                                <div class="scheme-dot" style="background:#BAE6FD;"></div>
+                            </div>
+                            <div class="scheme-name">
+                                <i class="fas fa-circle me-1" style="color:#1D4ED8;font-size:.65rem;"></i>
+                                Classic Blue
+                            </div>
+                            <div class="scheme-desc">Professional deep blue</div>
+                        </label>
+                    </div>
+
+                    <!-- Crimson -->
+                    <div class="col-md-4">
+                        <label class="scheme-card {% if settings.color_scheme == 'crimson' %}selected{% endif %}"
+                               for="scheme_crimson">
+                            <input type="radio" name="color_scheme" id="scheme_crimson" value="crimson"
+                                   {% if settings.color_scheme == 'crimson' %}checked{% endif %}>
+                            <div class="scheme-preview" style="background:linear-gradient(135deg,#B91C3C,#1E0B14);">
+                                <div class="scheme-bar" style="background:#D97706;"></div>
+                                <div class="scheme-dot" style="background:#FCD34D;"></div>
+                            </div>
+                            <div class="scheme-name">
+                                <i class="fas fa-circle me-1" style="color:#B91C3C;font-size:.65rem;"></i>
+                                Crimson Gold
+                            </div>
+                            <div class="scheme-desc">Bold red with gold accents</div>
+                        </label>
+                    </div>
+
+                    <!-- Green -->
+                    <div class="col-md-4">
+                        <label class="scheme-card {% if settings.color_scheme == 'green' %}selected{% endif %}"
+                               for="scheme_green">
+                            <input type="radio" name="color_scheme" id="scheme_green" value="green"
+                                   {% if settings.color_scheme == 'green' %}checked{% endif %}>
+                            <div class="scheme-preview" style="background:linear-gradient(135deg,#065F46,#052E16);">
+                                <div class="scheme-bar" style="background:#D97706;"></div>
+                                <div class="scheme-dot" style="background:#FCD34D;"></div>
+                            </div>
+                            <div class="scheme-name">
+                                <i class="fas fa-circle me-1" style="color:#065F46;font-size:.65rem;"></i>
+                                Forest Green
+                            </div>
+                            <div class="scheme-desc">Rich green with gold accents</div>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-100">
+            <i class="fas fa-save me-2"></i>Save All Settings
+        </button>
+    </div>
+
+    <!-- Right: Live Preview -->
+    <div class="col-lg-5">
+        <div class="admin-card" style="position:sticky;top:75px;">
+            <div class="card-head"><i class="fas fa-eye"></i> Bill Preview</div>
+            <div class="card-body">
+                <div class="p-3 border rounded" style="font-family:monospace;font-size:0.82rem;background:#FAFAFA;">
+                    <div class="text-center border-bottom pb-2 mb-2">
+                        <div class="fw-bold" style="font-size:1rem;color:var(--p)">
+                            {{ settings.shop_name or 'Shop Name' }}
+                        </div>
+                        {% if settings.address %}
+                        <div class="text-muted" style="font-size:0.78rem;">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ settings.address }}
+                        </div>
+                        {% endif %}
+                        {% if settings.contact1_phone or settings.contact2_phone %}
+                        <div class="text-muted" style="font-size:0.78rem;">
+                            <i class="fas fa-phone me-1"></i>
+                            {{ settings.contact1_phone }}
+                            {% if settings.contact2_phone %} | {{ settings.contact2_phone }}{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between"><span>Date:</span><span>{{ now }}</span></div>
+                    <hr style="border-style:dashed;margin:6px 0;">
+                    <div class="d-flex justify-content-between"><span>Product A × 2</span><span>Rs. 300</span></div>
+                    <div class="d-flex justify-content-between"><span>Product B × 1</span><span>Rs. 150</span></div>
+                    <hr style="border-style:dashed;margin:6px 0;">
+                    <div class="d-flex justify-content-between"><span>Discount:</span><span class="text-danger">- Rs. 0</span></div>
+                    <div class="d-flex justify-content-between fw-bold" style="font-size:1rem;color:var(--p)">
+                        <span>Net Total:</span><span>Rs. 450</span>
+                    </div>
+                    {% if settings.bill_note %}
+                    <hr style="border-style:dashed;margin:6px 0;">
+                    <div class="text-center text-muted" style="font-size:0.78rem;">{{ settings.bill_note }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mt-3 p-3 rounded text-white text-center"
+                     style="background:linear-gradient(135deg,var(--p),var(--pd));">
+                    <div class="fw-bold" style="font-size:0.95rem;">
+                        {{ settings.shop_name or 'Shop Name' }}
+                    </div>
+                    {% if settings.address %}
+                    <div style="font-size:0.75rem;opacity:0.85;">
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ settings.address }}
+                    </div>
+                    {% endif %}
+                    {% if settings.contact1_phone or settings.contact2_phone %}
+                    <div style="font-size:0.75rem;opacity:0.85;">
+                        {{ settings.contact1_phone }}
+                        {% if settings.contact2_phone %} | {{ settings.contact2_phone }}{% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="mt-1" style="font-size:0.68rem;opacity:0.65;">POS Header Preview</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('input[name="color_scheme"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+        document.querySelectorAll('.scheme-card').forEach(c => c.classList.remove('selected'));
+        radio.closest('.scheme-card').classList.add('selected');
+    });
+});
+</script>
+<style>
+.scheme-card {
+    display:block;
+    cursor:pointer;
+    border:2px solid #e5e7eb;
+    border-radius:12px;
+    overflow:hidden;
+    transition:border-color .2s, box-shadow .2s;
+    text-align:center;
+}
+.scheme-card input[type="radio"] { display:none; }
+.scheme-card:hover { border-color:var(--p); box-shadow:0 0 0 3px var(--sl); }
+.scheme-card.selected { border-color:var(--p); box-shadow:0 0 0 3px var(--sl); }
+.scheme-preview {
+    height:70px;
+    position:relative;
+    display:flex;
+    align-items:flex-end;
+    padding:8px;
+    gap:5px;
+}
+.scheme-bar {
+    height:30px;
+    flex:1;
+    border-radius:4px;
+    opacity:.85;
+}
+.scheme-dot {
+    width:24px;
+    height:24px;
+    border-radius:50%;
+    align-self:center;
+}
+.scheme-name {
+    font-size:.8rem;
+    font-weight:700;
+    padding:.4rem .5rem .1rem;
+    color:#1e293b;
+}
+.scheme-desc {
+    font-size:.72rem;
+    color:#64748b;
+    padding:.1rem .5rem .5rem;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "admin/base.html" %}
+{% block title %}Stock Report{% endblock %}
+{% block page_icon %}fas fa-layer-group{% endblock %}
+{% block page_title %}Stock Report{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Filter -->
+<div class="admin-card">
+    <div class="card-head"><i class="fas fa-filter"></i> Filter Stock</div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Category</label>
+                    <select name="cat_id" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if cat.id|string == selected_cat_id|string %}selected{% endif %}>
+                            {{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Max Stock (show items ≤)</label>
+                    <input type="number" name="min_stock" class="form-control" min="0"
+                           value="{{ min_stock }}" placeholder="e.g. 10 — leave blank for all">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100"><i class="fas fa-search me-2"></i>Apply</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stock Chart -->
+<div class="admin-card">
+    <div class="card-head"><i class="fas fa-chart-bar"></i> Stock Quantity by Category</div>
+    <div class="card-body">
+        <canvas id="stockChart" height="60"></canvas>
+    </div>
+</div>
+
+<!-- Stock Tables -->
+{% for item in filtered %}
+<div class="admin-card">
+    <div class="card-head d-flex align-items-center">
+        <i class="fas fa-tag me-2"></i>{{ item.category.name }}
+        <span class="ms-2 badge" style="background:rgba(255,255,255,.2);">{{ item.products|length }} item(s)</span>
+    </div>
+    <div class="card-body p-0">
+        {% if item.products %}
+        <table class="table table-hover mb-0" style="font-size:.84rem;">
+            <thead><tr><th>Product</th><th>Description</th><th>Stock</th><th>Low Limit</th><th>Price</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for p in item.products %}
+            <tr {% if p.quantity == 0 %}style="opacity:.55;"
+                {% elif p.quantity < (p.low_stock_limit or 5) %}class="table-warning"{% endif %}>
+                <td class="fw-semibold">{{ p.name }}</td>
+                <td class="text-muted small">{{ p.description or '—' }}</td>
+                <td>
+                    {% if p.quantity == 0 %}<span class="badge bg-danger">0</span>
+                    {% elif p.quantity < (p.low_stock_limit or 5) %}
+                    <span class="badge bg-warning text-dark">{{ p.quantity }}</span>
+                    {% else %}<span class="badge bg-success">{{ p.quantity }}</span>{% endif %}
+                </td>
+                <td class="text-muted">{{ p.low_stock_limit or 5 }}</td>
+                <td style="color:var(--p);font-weight:600;">Rs.{{ "%.2f"|format(p.price) }}</td>
+                <td>
+                    {% if p.quantity == 0 %}<span class="badge bg-danger">Out of Stock</span>
+                    {% elif p.quantity < (p.low_stock_limit or 5) %}<span class="badge bg-warning text-dark">Low Stock</span>
+                    {% else %}<span class="badge bg-success">In Stock</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-3 small">No products match filter.</div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const catNames   = {{ cat_names|safe }};
+const catTotals  = {{ cat_totals|safe }};
+const colors = catNames.map((_,i)=>`hsl(${210 + i*30},70%,50%)`);
+new Chart(document.getElementById('stockChart'),{
+    type:'bar',
+    data:{
+        labels:catNames,
+        datasets:[{
+            label:'Total Stock',
+            data:catTotals,
+            backgroundColor:colors,
+            borderRadius:6,
+        }]
+    },
+    options:{
+        responsive:true,
+        plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true}}
+    }
+});
+</script>
+{% endblock %}

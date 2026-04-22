@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt #{{ transaction_id }}</title>
+    <style>
+        /* ── Thermal Printer: 80mm paper standard ── */
+        @page {
+            size: 80mm auto;
+            margin: 4mm 3mm;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            color: #000;
+            background: #fff;
+            width: 72mm;          /* printable width on 80mm roll */
+            margin: 0 auto;
+        }
+
+        /* ── Header ── */
+        .r-header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+        }
+        .r-logo {
+            width: 48px; height: 48px;
+            border-radius: 50%; object-fit: cover;
+            display: block; margin: 0 auto 4px;
+        }
+        .r-shop-name {
+            font-size: 14px; font-weight: bold;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .r-sub { font-size: 10px; margin-top: 2px; }
+        .r-divider { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+
+        /* ── Meta row ── */
+        .r-meta { font-size: 10px; margin-bottom: 5px; }
+        .r-meta-row {
+            display: flex; justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        /* ── Items table ── */
+        table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+        thead th {
+            border-top: 1px dashed #000;
+            border-bottom: 1px dashed #000;
+            padding: 3px 0;
+            text-align: left;
+        }
+        thead th:last-child, tbody td:last-child { text-align: right; }
+        tbody td { padding: 2px 0; vertical-align: top; }
+        .item-name { max-width: 30mm; word-break: break-word; }
+        .item-disc { font-size: 9px; color: #555; }
+
+        /* ── Totals ── */
+        .r-totals { margin-top: 5px; border-top: 1px dashed #000; padding-top: 4px; }
+        .r-total-row {
+            display: flex; justify-content: space-between;
+            font-size: 10.5px; margin-bottom: 2px;
+        }
+        .r-grand {
+            font-size: 13px; font-weight: bold;
+            border-top: 1px dashed #000;
+            padding-top: 3px; margin-top: 3px;
+        }
+
+        /* ── Footer ── */
+        .r-footer {
+            text-align: center;
+            border-top: 1px dashed #000;
+            margin-top: 6px; padding-top: 6px;
+            font-size: 10px;
+        }
+
+        /* ── Screen-only (buttons) ── */
+        .screen-only {
+            width: 72mm; margin: 12px auto 0; text-align: center;
+        }
+        .btn-print {
+            background: #1D4ED8; color: #fff; border: none;
+            border-radius: 6px; padding: 8px 24px;
+            font-size: 14px; cursor: pointer; margin-right: 6px;
+        }
+        .btn-back {
+            background: #6B7280; color: #fff; border: none;
+            border-radius: 6px; padding: 8px 20px;
+            font-size: 14px; cursor: pointer; text-decoration: none;
+            display: inline-block;
+        }
+
+        @media print {
+            .screen-only { display: none; }
+            body { width: 72mm; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Receipt body -->
+<div class="r-header">
+    <img src="{{ url_for('static', filename='images/logo.jpeg') }}"
+         alt="Logo" class="r-logo">
+    <div class="r-shop-name">{{ shop_settings.shop_name if shop_settings else 'POS' }}</div>
+    {% if shop_settings and shop_settings.address %}
+    <div class="r-sub">{{ shop_settings.address }}</div>
+    {% endif %}
+    {% if shop_settings and (shop_settings.contact1_phone or shop_settings.contact2_phone) %}
+    <div class="r-sub">
+        Ph: {{ shop_settings.contact1_phone }}
+        {%- if shop_settings.contact2_phone %} / {{ shop_settings.contact2_phone }}{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="r-meta">
+    <div class="r-meta-row"><span>Date:</span><span>{{ date }}</span></div>
+    <div class="r-meta-row"><span>Receipt #:</span><span>{{ transaction_id }}</span></div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th class="item-name">Item</th>
+            <th style="text-align:center;">Qty</th>
+            <th style="text-align:right;">Price</th>
+            <th style="text-align:right;">Total</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in items %}
+    <tr>
+        <td class="item-name">
+            {{ item.name }}
+            {% if item.discount and item.discount > 0 %}
+            <div class="item-disc">Disc: Rs.{{ "%.0f"|format(item.discount) }}</div>
+            {% endif %}
+        </td>
+        <td style="text-align:center;">{{ item.qty }}</td>
+        <td style="text-align:right;">{{ "%.0f"|format(item.price_after_discount) }}</td>
+        <td style="text-align:right;">{{ "%.0f"|format(item.price_after_discount * item.qty) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="r-totals">
+    <div class="r-total-row">
+        <span>Subtotal:</span>
+        <span>Rs. {{ "%.2f"|format(total + total_discount) }}</span>
+    </div>
+    {% if total_discount > 0 %}
+    <div class="r-total-row">
+        <span>Discount:</span>
+        <span>- Rs. {{ "%.2f"|format(total_discount) }}</span>
+    </div>
+    {% endif %}
+    <div class="r-total-row r-grand">
+        <span>NET TOTAL:</span>
+        <span>Rs. {{ "%.2f"|format(total) }}</span>
+    </div>
+</div>
+
+<div class="r-footer">
+    {% if shop_settings and shop_settings.bill_note %}
+    {{ shop_settings.bill_note }}
+    {% else %}
+    Thank you! Please visit again.
+    {% endif %}
+    <div style="margin-top:4px;font-size:9px;color:#777;">
+        *** {{ date }} ***
+    </div>
+</div>
+
+<!-- Screen buttons (hidden on print) -->
+<div class="screen-only">
+    <button class="btn-print" onclick="window.print()">
+        &#128438; Print Receipt
+    </button>
+    <a href="/" class="btn-back">&#8962; Continue</a>
+</div>
+
+<script>
+    // Auto-print when page loads (standard for thermal POS)
+    window.addEventListener('load', function() {
+        setTimeout(function() { window.print(); }, 400);
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+{% extends "admin/base.html" %}
+{% block title %}Low Stock{% endblock %}
+{% block page_icon %}fas fa-exclamation-triangle{% endblock %}
+{% block page_title %}Low Stock Alert{% endblock %}
+
+{% block content %}
+{% if products %}
+<div class="admin-card">
+    <div class="card-head d-flex align-items-center" style="background:linear-gradient(90deg,#92400E,#78350F);">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ total_count }} product(s) below low stock limit
+        <a href="/admin/lowstock/export" class="btn btn-export ms-auto">
+            <i class="fas fa-file-excel me-1"></i>Export Excel
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:.84rem;">
+                <thead>
+                    <tr>
+                        <th>#</th><th>Name</th><th>Description</th><th>Category</th>
+                        <th>Stock</th><th>Limit</th><th>Price</th><th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in products %}
+                <tr {% if p.quantity == 0 %}style="opacity:.55;"{% endif %}>
+                    <td class="text-muted small">{{ loop.index }}</td>
+                    <td class="fw-semibold">{{ p.name }}</td>
+                    <td class="text-muted small" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        {{ p.description or '—' }}</td>
+                    <td><span class="badge badge-cat">{{ p.category.name }}</span></td>
+                    <td>
+                        {% if p.quantity == 0 %}
+                        <span class="badge bg-danger">Out of Stock</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-exclamation-triangle me-1"></i>{{ p.quantity }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ p.low_stock_limit or 5 }}</td>
+                    <td style="color:var(--p);font-weight:700;">Rs.{{ "%.2f"|format(p.price) }}</td>
+                    <td>
+                        <a href="/admin/update/{{ p.id }}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-plus me-1"></i>Restock
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="admin-card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-check-circle fa-3x mb-3" style="color:#059669"></i>
+        <h4 class="text-success">All stocks are sufficient!</h4>
+        <p class="text-muted">No products are currently below their low stock threshold.</p>
+    </div>
+</div>
+{% if total_pages > 1 %}
+<nav class="d-flex justify-content-center mt-2">
+    <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if page == 1 else '' }}">
+            <a class="page-link" href="?page={{ page-1 }}">‹</a>
+        </li>
+        {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+        <li class="page-item {{ 'active' if p == page else '' }}">
+            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if page == total_pages else '' }}">
+            <a class="page-link" href="?page={{ page+1 }}">›</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endif %}
+{% endblock %}

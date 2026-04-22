@@ -1,0 +1,236 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_icon %}fas fa-th-large{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block head %}
+<style>
+.stat-card{background:#fff;border-radius:12px;border-left:4px solid;
+    box-shadow:0 1px 5px rgba(0,0,0,0.07);display:flex;align-items:center;
+    gap:.9rem;padding:.9rem 1.1rem;}
+.stat-icon{width:44px;height:44px;border-radius:10px;display:flex;
+    align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.stat-val{font-size:1.5rem;font-weight:800;color:#111827;line-height:1;}
+.stat-lbl{font-size:.72rem;color:#6B7280;margin-top:2px;font-weight:500;}
+
+.period-btn{border:2px solid var(--p);color:var(--p);background:#fff;
+    border-radius:22px;padding:.3rem 1.1rem;font-size:.82rem;font-weight:700;
+    cursor:pointer;transition:all .15s;white-space:nowrap;}
+.period-btn:hover,.period-btn.active{background:var(--p);color:#fff;}
+.period-label{font-size:.75rem;color:#6B7280;font-weight:600;margin-bottom:.35rem;}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Period Filter Card -->
+<form method="POST" id="periodForm" class="admin-card">
+    <div class="card-head"><i class="fas fa-calendar-alt"></i> Filter Period</div>
+    <div class="card-body pb-3">
+
+        <!-- Quick buttons -->
+        <div class="period-label">Quick Select</div>
+        <div class="d-flex gap-2 flex-wrap mb-3">
+            <button type="button" onclick="setPeriod('today')"
+                class="period-btn {{ 'active' if active_period == 'today' else '' }}">
+                <i class="fas fa-sun me-1"></i>Today
+            </button>
+            <button type="button" onclick="setPeriod('week')"
+                class="period-btn {{ 'active' if active_period == 'week' else '' }}">
+                <i class="fas fa-calendar-week me-1"></i>This Week
+            </button>
+            <button type="button" onclick="setPeriod('month')"
+                class="period-btn {{ 'active' if active_period == 'month' else '' }}">
+                <i class="fas fa-calendar me-1"></i>This Month
+            </button>
+            <button type="button" onclick="toggleCustom()"
+                class="period-btn {{ 'active' if active_period == 'custom' else '' }}"
+                id="customBtn">
+                <i class="fas fa-sliders-h me-1"></i>Custom Date
+            </button>
+        </div>
+
+        <!-- Custom date picker (hidden unless custom is active) -->
+        <div id="customDateRow"
+             style="display:{{ 'block' if active_period == 'custom' else 'none' }};">
+            <div class="period-label">Custom Range</div>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">From</label>
+                    <input type="date" id="startDate" name="start_date"
+                           class="form-control" value="{{ start_str }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">To</label>
+                    <input type="date" id="endDate" name="end_date"
+                           class="form-control" value="{{ end_str }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-sync me-2"></i>Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Showing period label -->
+        <div class="mt-2" style="font-size:.78rem;color:#6B7280;">
+            <i class="fas fa-info-circle me-1"></i>
+            Showing: <strong>{{ start_str }}</strong> to <strong>{{ end_str }}</strong>
+        </div>
+
+    </div>
+    <input type="hidden" name="period" id="periodInput" value="{{ active_period }}">
+</form>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="border-left-color:var(--p);">
+            <div class="stat-icon" style="background:#EFF6FF;color:var(--p);"><i class="fas fa-receipt"></i></div>
+            <div><div class="stat-val">Rs.{{ "%.0f"|format(revenue) }}</div><div class="stat-lbl">Total Sales</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="border-left-color:#059669;">
+            <div class="stat-icon" style="background:#ECFDF5;color:#059669;"><i class="fas fa-chart-line"></i></div>
+            <div><div class="stat-val">Rs.{{ "%.0f"|format(profit) }}</div><div class="stat-lbl">Total Profit</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="border-left-color:var(--s);">
+            <div class="stat-icon" style="background:#FFF7ED;color:var(--s);"><i class="fas fa-shopping-bag"></i></div>
+            <div><div class="stat-val">{{ qty_sold }}</div><div class="stat-lbl">Items Sold</div></div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card" style="border-left-color:#DC2626;">
+            <div class="stat-icon" style="background:#FEF2F2;color:#DC2626;"><i class="fas fa-exclamation-triangle"></i></div>
+            <div><div class="stat-val">{{ low_stock_count }}</div><div class="stat-lbl">Low Stock Items</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Overview Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="admin-card mb-0 text-center py-3">
+            <div class="stat-val" style="color:var(--p);font-size:1.8rem;">{{ total_products }}</div>
+            <div class="stat-lbl">Total Products</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card mb-0 text-center py-3">
+            <div class="stat-val" style="color:var(--s);font-size:1.8rem;">{{ total_cats }}</div>
+            <div class="stat-lbl">Categories</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card mb-0 text-center py-3">
+            <div class="stat-val" style="color:#DC2626;font-size:1.8rem;">{{ out_of_stock }}</div>
+            <div class="stat-lbl">Out of Stock</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-card mb-0 text-center py-3">
+            <div class="stat-val" style="color:#059669;font-size:1.3rem;">Rs.{{ "%.0f"|format(total_stock_val) }}</div>
+            <div class="stat-lbl">Stock Value</div>
+        </div>
+    </div>
+</div>
+
+<!-- Hot Items + Stock Chart -->
+<div class="row g-3 mb-4">
+    <!-- Hot Items -->
+    <div class="col-lg-6">
+        <div class="admin-card mb-0">
+            <div class="card-head"><i class="fas fa-fire"></i> Hot Selling Items (Selected Period)</div>
+            <div class="card-body p-0">
+                {% if hot_items %}
+                <table class="table table-hover mb-0" style="font-size:.83rem;">
+                    <thead><tr><th>#</th><th>Product</th><th>Category</th><th>Qty Sold</th></tr></thead>
+                    <tbody>
+                    {% for item in hot_items %}
+                    <tr>
+                        <td>
+                            {% if loop.index == 1 %}<span style="color:#D97706;font-size:1rem;">🥇</span>
+                            {% elif loop.index == 2 %}<span style="font-size:1rem;">🥈</span>
+                            {% elif loop.index == 3 %}<span style="font-size:1rem;">🥉</span>
+                            {% else %}<span class="text-muted">{{ loop.index }}</span>{% endif %}
+                        </td>
+                        <td class="fw-semibold">{{ item.product.name }}</td>
+                        <td><span class="badge badge-cat">{{ item.product.category.name }}</span></td>
+                        <td><span class="badge bg-success">{{ item.qty }}</span></td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="text-center text-muted py-4" style="font-size:.85rem;">
+                    <i class="fas fa-chart-bar fa-2x mb-2 d-block opacity-25"></i>
+                    No sales data for selected period.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock by Category -->
+    <div class="col-lg-6">
+        <div class="admin-card mb-0">
+            <div class="card-head"><i class="fas fa-layer-group"></i> Stock Distribution</div>
+            <div class="card-body">
+                {% for cat in cat_stats %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span style="font-size:.8rem;font-weight:600;">{{ cat.name }}</span>
+                        <span style="font-size:.73rem;color:#6B7280;">
+                            {{ cat.count }}
+                            {% if cat.low %}<span style="color:#DC2626;"> · {{ cat.low }} low</span>{% endif %}
+                        </span>
+                    </div>
+                    <div style="background:#F3F4F6;border-radius:6px;height:10px;overflow:hidden;">
+                        <div style="width:{{ [((cat.count/max_count)*100)|round,3]|max }}%;height:100%;border-radius:6px;
+                            background:linear-gradient(90deg,var(--p),var(--s));"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function fmtDate(d) {
+    return d.toISOString().split('T')[0];
+}
+
+function setPeriod(period) {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    let start = new Date(today);
+
+    if (period === 'week') {
+        const day = today.getDay() || 7;
+        start = new Date(today);
+        start.setDate(today.getDate() - day + 1);
+    } else if (period === 'month') {
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+
+    document.getElementById('periodInput').value  = period;
+    document.getElementById('startDate').value    = fmtDate(start);
+    document.getElementById('endDate').value      = fmtDate(today);
+    document.getElementById('customDateRow').style.display = 'none';
+    document.getElementById('periodForm').submit();
+}
+
+function toggleCustom() {
+    const row = document.getElementById('customDateRow');
+    const visible = row.style.display !== 'none';
+    row.style.display = visible ? 'none' : 'block';
+    document.getElementById('customBtn').classList.toggle('active', !visible);
+    if (!visible) document.getElementById('periodInput').value = 'custom';
+}
+</script>
+{% endblock %}
