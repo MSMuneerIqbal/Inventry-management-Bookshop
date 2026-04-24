@@ -29,9 +29,11 @@
             margin-bottom: 6px;
         }
         .r-logo {
-            width: 48px; height: 48px;
-            border-radius: 50%; object-fit: cover;
-            display: block; margin: 0 auto 4px;
+            max-width: 180px;
+            max-height: 80px;
+            width: auto; height: auto;
+            display: block; margin: 0 auto 6px;
+            object-fit: contain;
         }
         .r-shop-name {
             font-size: 14px; font-weight: bold;
@@ -106,8 +108,9 @@
 
 <!-- Receipt body -->
 <div class="r-header">
-    <img src="{{ url_for('static', filename='images/logo.jpeg') }}"
-         alt="Logo" class="r-logo">
+    {% if logo_data %}
+    <img src="{{ logo_data }}" alt="Logo" class="r-logo">
+    {% endif %}
     <div class="r-shop-name">{{ shop_settings.shop_name if shop_settings else 'POS' }}</div>
     {% if shop_settings and shop_settings.address %}
     <div class="r-sub">{{ shop_settings.address }}</div>
@@ -123,6 +126,9 @@
 <div class="r-meta">
     <div class="r-meta-row"><span>Date:</span><span>{{ date }}</span></div>
     <div class="r-meta-row"><span>Receipt #:</span><span>{{ transaction_id }}</span></div>
+    {% if customer_name %}
+    <div class="r-meta-row"><span>Customer:</span><span style="font-weight:bold;">{{ customer_name }}</span></div>
+    {% endif %}
 </div>
 
 <table>

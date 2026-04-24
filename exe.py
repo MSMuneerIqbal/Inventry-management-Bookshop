@@ -6,7 +6,7 @@ EXE:   pyinstaller --onedir --windowed --icon=bookshop.ico
        --name=BabaBangles exe.py
 """
 
-import sys, os, threading, time, io, json, sqlite3
+import sys, os, threading, time, io, json, sqlite3, base64
 from datetime import datetime, date, timedelta
 
 if getattr(sys, 'frozen', False):
@@ -93,6 +93,7 @@ class Sale(db.Model):
     sale_date     = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     is_return     = db.Column(db.Boolean, default=False, index=True)
     discount      = db.Column(db.Float, default=0)
+    customer_name = db.Column(db.String(200), default='')
     product       = db.relationship('Product', backref='sales')
 
 
@@ -134,6 +135,7 @@ with app.app_context():
     _migrate('ALTER TABLE shop_settings ADD COLUMN color_scheme VARCHAR(20) DEFAULT "blue"')
     _migrate('ALTER TABLE product ADD COLUMN description TEXT DEFAULT ""')
     _migrate('ALTER TABLE product ADD COLUMN low_stock_limit INTEGER DEFAULT 5')
+    _migrate('ALTER TABLE sale ADD COLUMN customer_name VARCHAR(200) DEFAULT ""')
 
     # Explicit indexes (SQLAlchemy may not create these for existing DBs)
     _migrate('CREATE INDEX IF NOT EXISTS ix_sale_sale_date   ON sale(sale_date)')
@@ -168,10 +170,37 @@ with app.app_context():
 #  HELPERS
 # ══════════════════════════════════════════════════════════════════════════════
 
+import traceback as _tb
+
+@app.errorhandler(Exception)
+def _show_error(e):
+    return f"<pre style='color:red;font-size:13px;padding:20px'>{_tb.format_exc()}</pre>", 500
+
+_logo_cache: dict = {}  # populated once on first request, keyed by 'data'
+
+def _load_logo() -> str | None:
+    """Read logo.jpeg from static/images and return a base64 data-URL, or None."""
+    if 'data' in _logo_cache:
+        return _logo_cache['data']
+    logo_path = os.path.join(_BASE, 'static', 'images', 'logo.jpeg')
+    if os.path.exists(logo_path):
+        with open(logo_path, 'rb') as f:
+            _logo_cache['data'] = 'data:image/jpeg;base64,' + base64.b64encode(f.read()).decode()
+    else:
+        _logo_cache['data'] = None
+    return _logo_cache['data']
+
 @app.context_processor
 def inject_globals():
-    s = ShopSettings.query.first()
-    return {'shop_settings': s, 'color_scheme': s.color_scheme if s else 'blue'}
+    try:
+        s = ShopSettings.query.first()
+        return {
+            'shop_settings': s,
+            'color_scheme': s.color_scheme if s else 'blue',
+            'logo_data': _load_logo(),
+        }
+    except Exception:
+        return {'shop_settings': None, 'color_scheme': 'blue', 'logo_data': None}
 
 
 def get_cart():
@@ -180,14 +209,19 @@ def get_cart():
 
 
 def get_cart_items():
-    cart, items, total = get_cart(), [], 0
-    for pid, data in cart.items():
-        p = db.session.get(Product, int(pid))
+    cart = get_cart()
+    if not cart:
+        return [], 0
+    pids     = [int(pid) for pid in cart]
+    prod_map = {p.id: p for p in Product.query.filter(Product.id.in_(pids)).all()}
+    items, total = [], 0
+    for pid_str, data in cart.items():
+        p = prod_map.get(int(pid_str))
         if p:
-            disc = data.get('discount', p.discount)
+            disc = data.get('discount', p.discount) or 0
             pad  = max(p.price - disc, 0)
             total += pad * data['qty']
-            items.append({'id': int(pid), 'name': p.name, 'qty': data['qty'],
+            items.append({'id': int(pid_str), 'name': p.name, 'qty': data['qty'],
                           'price': p.price, 'discount': disc,
                           'price_after_discount': pad, 'max_qty': p.quantity})
     return items, total
@@ -249,21 +283,24 @@ def _paginate(query, page):
 
 @app.route('/')
 def home():
-    query        = request.args.get('q', '')
-    selected_cat = request.args.get('cat_id', '')
-    base = Product.query.join(Category)
-    if selected_cat:
-        base = base.filter(Product.category_id == int(selected_cat))
-    if query:
-        base = base.filter(
-            (Product.name.contains(query)) | (Product.description.contains(query))
-        )
-    products   = base.order_by(Product.name).all()
-    categories = Category.query.order_by(Category.name).all()
-    cart_items = len(get_cart())
-    return render_template('home.html', products=products, query=query,
-                           categories=categories, selected_cat=selected_cat,
-                           cart_items=cart_items)
+    try:
+        query        = request.args.get('q', '')
+        selected_cat = request.args.get('cat_id', '')
+        base = Product.query.join(Category)
+        if selected_cat:
+            base = base.filter(Product.category_id == int(selected_cat))
+        if query:
+            base = base.filter(
+                (Product.name.contains(query)) | (Product.description.contains(query))
+            )
+        products   = base.order_by(Product.name).limit(600).all()
+        categories = Category.query.order_by(Category.name).all()
+        cart_items = len(get_cart())
+        return render_template('home.html', products=products, query=query,
+                               categories=categories, selected_cat=selected_cat,
+                               cart_items=cart_items)
+    except Exception:
+        return f"<pre style='color:red;padding:20px;font-size:14px'>{_tb.format_exc()}</pre>", 500
 
 
 @app.route('/search')
@@ -722,15 +759,30 @@ def admin_stock_report():
     selected_cat_id = request.form.get('cat_id', '') or request.args.get('cat_id', '')
     min_stock       = request.form.get('min_stock', '') or request.args.get('min_stock', '')
 
-    filtered = []
-    for cat in categories:
-        prods = cat.products
-        if selected_cat_id:
-            if str(cat.id) != str(selected_cat_id): continue
-        if min_stock:
-            try: prods = [p for p in prods if p.quantity <= int(min_stock)]
-            except Exception: pass
-        filtered.append({'category': cat, 'products': prods})
+    # Single SQL query — no Python-side lazy loading, scales to any product count
+    prod_q = (
+        Product.query
+        .options(joinedload(Product.category))
+        .join(Category)
+        .order_by(Category.name, Product.name)
+    )
+    if selected_cat_id:
+        try:
+            prod_q = prod_q.filter(Product.category_id == int(selected_cat_id))
+        except Exception:
+            pass
+    if min_stock:
+        try:
+            prod_q = prod_q.filter(Product.quantity <= int(min_stock))
+        except Exception:
+            pass
+
+    cat_map: dict = {}
+    for p in prod_q.all():
+        if p.category_id not in cat_map:
+            cat_map[p.category_id] = {'category': p.category, 'products': []}
+        cat_map[p.category_id]['products'].append(p)
+    filtered = list(cat_map.values())
 
     qty_by_cat = dict(
         db.session.query(Product.category_id,

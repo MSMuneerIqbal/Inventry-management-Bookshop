@@ -273,20 +273,38 @@ pip install pillow
 python -c "from PIL import Image; img=Image.open('static/images/logo.jpeg'); img.save('bookshop.ico')"
 ```
 
-### Step 2 — Build
+### Step 2 — Delete old build (recommended before every rebuild)
 
 ```cmd
-pyinstaller --onedir --windowed --icon=bookshop.ico ^
-  --add-data="templates;templates" ^
-  --add-data="static;static" ^
-  --name=BabaBangles exe.py
+rmdir /s /q dist build __pycache__
+del BabaBangles.spec
 ```
 
-### Step 3 — Run
+### Step 3 — Build the EXE
+
+Run this single command from inside the project folder:
+
+```cmd
+.venv\Scripts\python.exe -m PyInstaller --noconfirm --onedir --windowed --icon=bookshop.ico --add-data "templates;templates" --add-data "static;static" --name BabaBangles exe.py
+```
+
+**What each flag does:**
+
+| Flag | Purpose |
+|---|---|
+| `--noconfirm` | Overwrite old build without asking |
+| `--onedir` | Output a folder (`dist\BabaBangles\`) — starts faster than `--onefile` |
+| `--windowed` | No black terminal window behind the app |
+| `--icon=bookshop.ico` | Sets the taskbar and file icon |
+| `--add-data "templates;templates"` | Bundles HTML templates inside the EXE |
+| `--add-data "static;static"` | Bundles CSS, JS, images, and fonts |
+| `--name BabaBangles` | Names the output `BabaBangles.exe` |
+
+### Step 4 — Run
 
 The output is in `dist\BabaBangles\`. Double-click `BabaBangles.exe` to launch.
 
-> **Important:** The database file (`bookshop.db`) is saved next to the `.exe`, not inside it — so your data is preserved when you update the application.
+> **Important:** Copy the **entire `dist\BabaBangles\` folder** when sharing — the `.exe` needs the `_internal` folder beside it to work. The database file (`database.db`) is created automatically next to the `.exe` on first run, and is preserved across updates.
 
 ---
 
